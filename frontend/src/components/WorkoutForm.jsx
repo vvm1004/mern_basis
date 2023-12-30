@@ -1,9 +1,14 @@
 import React, { useState } from 'react'
 import { useWorkoutsContext } from '../hooks/useWorkoutsContext'
+import { useAuthContext } from '../hooks/useAuthContext'
+
 
 
 const WorkoutForm = () => {
     const { dispatch } = useWorkoutsContext()
+    const { user } = useAuthContext()
+
+
     const [title, setTitle] = useState('');
     const [load, setLoad] = useState('');
     const [reps, setReps] = useState('');
@@ -13,13 +18,19 @@ const WorkoutForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        
+        if(!user){
+            setError('You must be logged in')
+            return
+        }
         const workout = { title, load, reps }
 
         const response = await fetch('http://localhost:4000/api/workouts', {
             method: 'POST',
             body: JSON.stringify(workout),
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${user.token}`
             }
         })
 
@@ -31,7 +42,7 @@ const WorkoutForm = () => {
         }
         if (response.ok) {
             setError(null),
-                setTitle('')
+            setTitle('')
             setLoad('')
             setReps('')
             dispatch({ type: 'CREATE_WORKOUT', payload: json })
@@ -47,7 +58,7 @@ const WorkoutForm = () => {
                 type='text'
                 onChange={(e) => setTitle(e.target.value)}
                 value={title}
-                className={emptyFields.includes('title') ? 'error' : ' '}
+                className={emptyFields.includes('title') ? 'error' : ''}
 
             />
             <label>Load (in kg):</label>
